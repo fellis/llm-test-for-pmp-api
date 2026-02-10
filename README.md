@@ -7,7 +7,7 @@ Single API, single model at a time. Model is chosen by profile at startup (confi
 | Profile    | Model                          | Use case        |
 |-------------|---------------------------------|-----------------|
 | `coding`    | Qwen2.5-Coder-14B AWQ, 32k      | Code generation |
-| `instruct`  | Qwen2.5-32B-Instruct AWQ, 32k   | General instruct|
+| `instruct`  | Qwen2.5-32B-Instruct AWQ, 8k    | General instruct|
 | `chat`      | Mistral-7B-Instruct             | Conversation    |
 
 Profiles are defined in `config/models.json`. All models use the same cache: `./models` (Hugging Face cache). First run downloads the model; later runs use cache.
