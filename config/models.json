@@ -4,7 +4,7 @@
       "model": "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ",
       "quantization": "awq",
       "max_model_len": 32768,
-      "gpu_memory_utilization": 0.90,
+      "gpu_memory_utilization": 0.9,
       "kv_cache_dtype": "fp8",
       "backend_model_id": "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ"
     },
@@ -12,8 +12,9 @@
       "model": "ronantakizawa/phi-4-reasoning-awq",
       "quantization": "awq",
       "max_model_len": 8192,
-      "gpu_memory_utilization": 0.90,
-      "backend_model_id": "ronantakizawa/phi-4-reasoning-awq"
+      "gpu_memory_utilization": 0.9,
+      "backend_model_id": "ronantakizawa/phi-4-reasoning-awq",
+      "dtype": "float16"
     },
     "chat": {
       "model": "mistralai/Mistral-7B-Instruct-v0.2",

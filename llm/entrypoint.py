@@ -50,6 +50,8 @@ def main():
 
     if cfg.get("quantization"):
         argv += ["--quantization", cfg["quantization"]]
+    if cfg.get("dtype"):
+        argv += ["--dtype", cfg["dtype"]]
     if cfg.get("max_model_len") is not None:
         argv += ["--max-model-len", str(cfg["max_model_len"])]
     if cfg.get("gpu_memory_utilization") is not None:
