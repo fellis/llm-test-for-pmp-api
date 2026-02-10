@@ -58,4 +58,8 @@ services:
       - "8000:8000"
     environment:
       - BACKEND_URL=http://llm-coding:8002
+      # - AUTH_CONFIG_PATH=/app/auth.json
+    # Optional: mount auth.json to enable Bearer token auth (copy from api/auth.json.example)
+    # volumes:
+    #   - ./auth.json:/app/auth.json
     restart: unless-stopped

@@ -45,7 +45,18 @@ Models persist via bind mount `./models`.
 | 8000 | API (main entry)  |
 | 8002 | Coding LLM (direct) |
 
+## Auth (optional)
+
+To require Bearer token for `/v1/models` and `/v1/chat/completions`:
+
+1. Copy `api/auth.json.example` to `auth.json` in the project root and list allowed tokens.
+2. In `docker-compose.yml`, uncomment the `api` service `volumes` and mount `./auth.json`.
+3. Clients send: `Authorization: Bearer <token>`.
+
+If `auth.json` is missing or `tokens` is empty, the API runs without auth. `/health` is never protected.
+
 ## Env vars (api service)
 
 - `BACKEND_URL` – LLM backend URL (default: `http://llm-coding:8002`)
 - `BACKEND_MODEL_ID` – model id sent to backend (default: `Qwen/Qwen2.5-Coder-14B-Instruct-AWQ`)
+- `AUTH_CONFIG_PATH` – path to JSON with `{"tokens": ["..."]}` (default: `auth.json`)
