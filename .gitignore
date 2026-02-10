@@ -1,4 +1,5 @@
 models/
+SERVER.md
 __pycache__/
 *.pyc
 .env

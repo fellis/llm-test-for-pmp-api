@@ -1,13 +1,12 @@
 # PMP LLM API
 
-Single API for chat and coding LLMs. Route by `model` parameter.
+Single API, single model (one backend at a time).
 
-## Models
+## Model
 
-| model   | Purpose                 | Backend            |
-|---------|-------------------------|--------------------|
-| `chat`  | General conversation    | Mistral 7B         |
-| `coding`| Complex coding tasks    | Qwen2.5-Coder 14B  |
+| model | Backend                 |
+|-------|-------------------------|
+| `llm` | Qwen2.5-Coder-32B (AWQ) |
 
 ## Requirements
 
@@ -20,11 +19,11 @@ Single API for chat and coding LLMs. Route by `model` parameter.
 ```bash
 git clone https://github.com/fellis/llm-test-for-pmp-api.git
 cd llm-test-for-pmp-api
-docker-compose up -d
+docker compose --profile coding up -d
 ```
 
-First run downloads models (several GB) into `./models/`. Check logs: `docker-compose logs -f`.  
-Models persist between restarts via bind mount `./models`.
+First run downloads the model (tens of GB) into `./models/`. Check logs: `docker compose logs -f llm-coding`.  
+Models persist via bind mount `./models`.
 
 ## API
 
@@ -32,16 +31,7 @@ Models persist between restarts via bind mount `./models`.
 
 ```json
 {
-  "model": "chat",
-  "messages": [{"role": "user", "content": "Hello!"}]
-}
-```
-
-or
-
-```json
-{
-  "model": "coding",
+  "model": "llm",
   "messages": [{"role": "user", "content": "Write a Python function to sort a list"}]
 }
 ```
@@ -50,13 +40,12 @@ or
 
 ## Ports
 
-| Port  | Service    |
-|-------|------------|
-| 8000  | API (main entry) |
-| 8001  | Chat LLM (direct) |
-| 8002  | Coding LLM (direct) |
+| Port | Service           |
+|------|-------------------|
+| 8000 | API (main entry)  |
+| 8002 | Coding LLM (direct) |
 
 ## Env vars (api service)
 
-- `CHAT_URL` - chat model backend URL (default: `http://llm-chat:8001`)
-- `CODING_URL` - coding model backend URL (default: `http://llm-coding:8002`)
+- `BACKEND_URL` – LLM backend URL (default: `http://llm-coding:8002`)
+- `BACKEND_MODEL_ID` – model id sent to backend (default: `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ`)

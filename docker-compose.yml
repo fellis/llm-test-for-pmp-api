@@ -1,6 +1,8 @@
 services:
-  # Chat model: fast, good for conversation
+  # Chat model: fast, good for conversation. Profile "chat" - on single GPU run only one profile.
   llm-chat:
+    profiles:
+      - chat
     image: vllm/vllm-openai:latest
     container_name: llm-chat
     runtime: nvidia
@@ -12,6 +14,8 @@ services:
       --host 0.0.0.0
       --port 8001
       --tensor-parallel-size 1
+      --enforce-eager
+      --gpu-memory-utilization 0.85
     ports:
       - "8001:8001"
     volumes:
@@ -19,8 +23,10 @@ services:
     shm_size: "8gb"
     restart: unless-stopped
 
-  # Coding model: stronger for complex code tasks
+  # Coding model: Qwen2.5-Coder-32B AWQ (stronger, fits 24GB). Profile "coding".
   llm-coding:
+    profiles:
+      - coding
     image: vllm/vllm-openai:latest
     container_name: llm-coding
     runtime: nvidia
@@ -28,10 +34,14 @@ services:
       - NVIDIA_VISIBLE_DEVICES=0
       - CUDA_VISIBLE_DEVICES=0
     command: >
-      --model Qwen/Qwen2.5-Coder-14B-Instruct
+      --model Qwen/Qwen2.5-Coder-32B-Instruct-AWQ
+      --quantization awq
       --host 0.0.0.0
       --port 8002
       --tensor-parallel-size 1
+      --enforce-eager
+      --gpu-memory-utilization 0.90
+      --max-model-len 16384
     ports:
       - "8002:8002"
     volumes:
@@ -39,16 +49,12 @@ services:
     shm_size: "8gb"
     restart: unless-stopped
 
-  # API proxy: single entry point, routes by model parameter
+  # API proxy: single backend (one model at a time)
   api:
     build: ./api
     container_name: llm-api
     ports:
       - "8000:8000"
     environment:
-      - CHAT_URL=http://llm-chat:8001
-      - CODING_URL=http://llm-coding:8002
-    depends_on:
-      - llm-chat
-      - llm-coding
+      - BACKEND_URL=http://llm-coding:8002
     restart: unless-stopped

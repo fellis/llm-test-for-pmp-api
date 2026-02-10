@@ -1,5 +1,5 @@
 """
-API proxy for PMP LLM. Routes requests to chat or coding model based on 'model' parameter.
+API proxy for PMP LLM. Single backend (one model at a time).
 """
 import os
 from contextlib import asynccontextmanager
@@ -8,24 +8,8 @@ import httpx
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import StreamingResponse
 
-CHAT_URL = os.getenv("CHAT_URL", "http://llm-chat:8001")
-CODING_URL = os.getenv("CODING_URL", "http://llm-coding:8002")
-
-MODEL_ROUTES = {
-    "chat": CHAT_URL,
-    "coding": CODING_URL,
-}
-
-
-def get_backend_url(model: str) -> str:
-    """Map model name to backend URL."""
-    model_lower = (model or "").strip().lower()
-    if model_lower not in MODEL_ROUTES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown model '{model}'. Use 'chat' or 'coding'.",
-        )
-    return MODEL_ROUTES[model_lower]
+BACKEND_URL = os.getenv("BACKEND_URL", "http://llm-coding:8002")
+BACKEND_MODEL_ID = os.getenv("BACKEND_MODEL_ID", "Qwen/Qwen2.5-Coder-32B-Instruct-AWQ")
 
 
 @asynccontextmanager
@@ -45,38 +29,40 @@ async def health():
 async def list_models():
     return {
         "object": "list",
-        "data": [
-            {"id": "chat", "object": "model"},
-            {"id": "coding", "object": "model"},
-        ],
+        "data": [{"id": "llm", "object": "model"}],
     }
 
 
 @app.api_route("/v1/chat/completions", methods=["POST"])
 async def chat_completions(request: Request):
     body = await request.json()
-    model = body.get("model")
-    if not model:
-        raise HTTPException(status_code=400, detail="Missing 'model' field. Use 'chat' or 'coding'.")
-
-    base_url = get_backend_url(model)
-    url = f"{base_url}/v1/chat/completions"
+    url = f"{BACKEND_URL}/v1/chat/completions"
+    backend_body = {**body, "model": BACKEND_MODEL_ID}
 
     if body.get("stream"):
         return StreamingResponse(
-            stream_response(url, body),
+            stream_response(url, backend_body),
             media_type="text/event-stream",
         )
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        resp = await client.post(url, json=body)
-        resp.raise_for_status()
-        return resp.json()
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(url, json=backend_body)
+            resp.raise_for_status()
+            return resp.json()
+    except httpx.ConnectError as e:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM backend is not available. Start the container.",
+        ) from e
 
 
 async def stream_response(url: str, body: dict):
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        async with client.stream("POST", url, json=body) as resp:
-            resp.raise_for_status()
-            async for chunk in resp.aiter_bytes():
-                yield chunk
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            async with client.stream("POST", url, json=body) as resp:
+                resp.raise_for_status()
+                async for chunk in resp.aiter_bytes():
+                    yield chunk
+    except httpx.ConnectError:
+        yield b"data: {\"error\":{\"message\":\"Backend not available\",\"code\":\"backend_unavailable\"}}\n\n"
