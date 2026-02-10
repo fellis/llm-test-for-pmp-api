@@ -23,7 +23,7 @@ services:
     shm_size: "8gb"
     restart: unless-stopped
 
-  # Coding model: Qwen2.5-Coder-32B AWQ (stronger, fits 24GB). Profile "coding".
+  # Coding model: Qwen2.5-Coder-14B AWQ, 32k context, FP8 KV-cache. Profile "coding".
   llm-coding:
     profiles:
       - coding
@@ -34,14 +34,15 @@ services:
       - NVIDIA_VISIBLE_DEVICES=0
       - CUDA_VISIBLE_DEVICES=0
     command: >
-      --model Qwen/Qwen2.5-Coder-32B-Instruct-AWQ
+      --model Qwen/Qwen2.5-Coder-14B-Instruct-AWQ
       --quantization awq
       --host 0.0.0.0
       --port 8002
       --tensor-parallel-size 1
       --enforce-eager
       --gpu-memory-utilization 0.90
-      --max-model-len 6144
+      --max-model-len 32768
+      --kv-cache-dtype fp8
     ports:
       - "8002:8002"
     volumes:

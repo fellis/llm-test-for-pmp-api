@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import StreamingResponse
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://llm-coding:8002")
-BACKEND_MODEL_ID = os.getenv("BACKEND_MODEL_ID", "Qwen/Qwen2.5-Coder-32B-Instruct-AWQ")
+BACKEND_MODEL_ID = os.getenv("BACKEND_MODEL_ID", "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ")
 
 
 @asynccontextmanager

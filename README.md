@@ -4,9 +4,9 @@ Single API, single model (one backend at a time).
 
 ## Model
 
-| model | Backend                 |
-|-------|-------------------------|
-| `llm` | Qwen2.5-Coder-32B (AWQ) |
+| model | Backend                  |
+|-------|--------------------------|
+| `llm` | Qwen2.5-Coder-14B (AWQ), 32k context, FP8 KV-cache |
 
 ## Requirements
 
@@ -48,4 +48,4 @@ Models persist via bind mount `./models`.
 ## Env vars (api service)
 
 - `BACKEND_URL` – LLM backend URL (default: `http://llm-coding:8002`)
-- `BACKEND_MODEL_ID` – model id sent to backend (default: `Qwen/Qwen2.5-Coder-32B-Instruct-AWQ`)
+- `BACKEND_MODEL_ID` – model id sent to backend (default: `Qwen/Qwen2.5-Coder-14B-Instruct-AWQ`)
