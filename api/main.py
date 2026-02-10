@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 import httpx
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import StreamingResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, HTTPException as HTTPExc
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://llm-coding:8002")
 BACKEND_MODEL_ID = os.getenv("BACKEND_MODEL_ID", "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ")
@@ -50,10 +50,10 @@ async def verify_token(credentials: HTTPAuthorizationCredentials | None = Depend
     if allowed_tokens is None:
         return
     if credentials is None:
-        raise HTTPExc(status_code=401, detail="Missing Authorization header")
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
     token = (credentials.credentials or "").strip()
     if token not in allowed_tokens:
-        raise HTTPExc(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 @app.get("/health")
