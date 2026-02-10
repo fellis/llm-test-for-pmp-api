@@ -15,7 +15,7 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - huggingface_cache:/root/.cache/huggingface
+      - ./models:/root/.cache/huggingface
     shm_size: "8gb"
     restart: unless-stopped
 
@@ -35,7 +35,7 @@ services:
     ports:
       - "8002:8002"
     volumes:
-      - huggingface_cache:/root/.cache/huggingface
+      - ./models:/root/.cache/huggingface
     shm_size: "8gb"
     restart: unless-stopped
 
@@ -52,6 +52,3 @@ services:
       - llm-chat
       - llm-coding
     restart: unless-stopped
-
-volumes:
-  huggingface_cache:

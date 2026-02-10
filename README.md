@@ -23,7 +23,8 @@ cd llm-test-for-pmp-api
 docker-compose up -d
 ```
 
-First run downloads models (several GB). Check logs: `docker-compose logs -f`.
+First run downloads models (several GB) into `./models/`. Check logs: `docker-compose logs -f`.  
+Models persist between restarts via bind mount `./models`.
 
 ## API
 
