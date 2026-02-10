@@ -41,7 +41,7 @@ services:
       --tensor-parallel-size 1
       --enforce-eager
       --gpu-memory-utilization 0.90
-      --max-model-len 16384
+      --max-model-len 6144
     ports:
       - "8002:8002"
     volumes:
