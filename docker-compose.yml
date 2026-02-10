@@ -1,65 +1,35 @@
+# Single LLM backend: model chosen by MODEL_PROFILE (see config/models.json).
+# Run: ./scripts/start.sh <profile>  (e.g. coding | reasoning | chat)
+# Models are cached in ./models (Hugging Face cache), not re-downloaded.
+
 services:
-  # Chat model: fast, good for conversation. Profile "chat" - on single GPU run only one profile.
-  llm-chat:
-    profiles:
-      - chat
-    image: vllm/vllm-openai:latest
-    container_name: llm-chat
+  llm:
+    build: ./llm
+    image: llm-backend
+    container_name: llm-backend
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=0
       - CUDA_VISIBLE_DEVICES=0
-    command: >
-      --model mistralai/Mistral-7B-Instruct-v0.2
-      --host 0.0.0.0
-      --port 8001
-      --tensor-parallel-size 1
-      --enforce-eager
-      --gpu-memory-utilization 0.85
-    ports:
-      - "8001:8001"
+      - MODEL_PROFILE=${MODEL_PROFILE:-coding}
+      - CONFIG_PATH=/config/models.json
     volumes:
       - ./models:/root/.cache/huggingface
-    shm_size: "8gb"
-    restart: unless-stopped
-
-  # Coding model: Qwen2.5-Coder-14B AWQ, 32k context, FP8 KV-cache. Profile "coding".
-  llm-coding:
-    profiles:
-      - coding
-    image: vllm/vllm-openai:latest
-    container_name: llm-coding
-    runtime: nvidia
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=0
-      - CUDA_VISIBLE_DEVICES=0
-    command: >
-      --model Qwen/Qwen2.5-Coder-14B-Instruct-AWQ
-      --quantization awq
-      --host 0.0.0.0
-      --port 8002
-      --tensor-parallel-size 1
-      --enforce-eager
-      --gpu-memory-utilization 0.90
-      --max-model-len 32768
-      --kv-cache-dtype fp8
+      - ./config:/config:ro
     ports:
       - "8002:8002"
-    volumes:
-      - ./models:/root/.cache/huggingface
     shm_size: "8gb"
     restart: unless-stopped
 
-  # API proxy: single backend (one model at a time)
   api:
     build: ./api
     container_name: llm-api
     ports:
       - "8000:8000"
     environment:
-      - BACKEND_URL=http://llm-coding:8002
-      # - AUTH_CONFIG_PATH=/app/auth.json
-    # Optional: mount auth.json to enable Bearer token auth (copy from api/auth.json.example)
+      - BACKEND_URL=http://llm:8002
+      - BACKEND_MODEL_ID=${BACKEND_MODEL_ID:-Qwen/Qwen2.5-Coder-14B-Instruct-AWQ}
+    # Optional: mount auth.json for Bearer token auth
     # volumes:
     #   - ./auth.json:/app/auth.json
     restart: unless-stopped

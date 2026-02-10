@@ -11,7 +11,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://llm-coding:8002")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://llm:8002")
 BACKEND_MODEL_ID = os.getenv("BACKEND_MODEL_ID", "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ")
 AUTH_CONFIG_PATH = os.getenv("AUTH_CONFIG_PATH", "auth.json")
 

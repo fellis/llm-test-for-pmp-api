@@ -1,12 +1,16 @@
 # PMP LLM API
 
-Single API, single model (one backend at a time).
+Single API, single model at a time. Model is chosen by profile at startup (config manager).
 
-## Model
+## Model profiles
 
-| model | Backend                  |
-|-------|--------------------------|
-| `llm` | Qwen2.5-Coder-14B (AWQ), 32k context, FP8 KV-cache |
+| Profile    | Model                          | Use case                    |
+|-----------|---------------------------------|-----------------------------|
+| `coding`  | Qwen2.5-Coder-14B AWQ, 32k     | Code generation             |
+| `reasoning` | Phi-4-reasoning AWQ (14B)    | Reasoning, strict rules     |
+| `chat`    | Mistral-7B-Instruct             | Conversation                |
+
+Profiles are defined in `config/models.json`. All models use the same cache: `./models` (Hugging Face cache). First run downloads the model; later runs use cache.
 
 ## Requirements
 
@@ -19,11 +23,22 @@ Single API, single model (one backend at a time).
 ```bash
 git clone https://github.com/fellis/llm-test-for-pmp-api.git
 cd llm-test-for-pmp-api
-docker compose --profile coding up -d
+./scripts/start.sh coding
 ```
 
-First run downloads the model (tens of GB) into `./models/`. Check logs: `docker compose logs -f llm-coding`.  
-Models persist via bind mount `./models`.
+To run another profile (e.g. reasoning for premium-handle filtering):
+
+```bash
+./scripts/start.sh reasoning
+```
+
+Only one profile runs at a time. Models are loaded from cache (`./models/`). Check logs: `docker compose logs -f llm`.
+
+## Config manager
+
+- **config/models.json** – defines profiles: `model`, `quantization`, `max_model_len`, `gpu_memory_utilization`, `backend_model_id`.
+- **scripts/start.sh \<profile>** – sets `MODEL_PROFILE` and `BACKEND_MODEL_ID`, runs `docker compose up -d`. Use profile name: `coding`, `reasoning`, or `chat`.
+- **Cache:** `./models` is mounted as Hugging Face cache; no re-download when switching profiles.
 
 ## API
 
@@ -43,7 +58,7 @@ Models persist via bind mount `./models`.
 | Port | Service           |
 |------|-------------------|
 | 8000 | API (main entry)  |
-| 8002 | Coding LLM (direct) |
+| 8002 | LLM backend      |
 
 ## Auth (optional)
 
@@ -55,8 +70,8 @@ To require Bearer token for `/v1/models` and `/v1/chat/completions`:
 
 If `auth.json` is missing or `tokens` is empty, the API runs without auth. `/health` is never protected.
 
-## Env vars (api service)
+## Env vars
 
-- `BACKEND_URL` – LLM backend URL (default: `http://llm-coding:8002`)
-- `BACKEND_MODEL_ID` – model id sent to backend (default: `Qwen/Qwen2.5-Coder-14B-Instruct-AWQ`)
-- `AUTH_CONFIG_PATH` – path to JSON with `{"tokens": ["..."]}` (default: `auth.json`)
+**llm service:** `MODEL_PROFILE` (coding | reasoning | chat), `CONFIG_PATH` (default `/config/models.json`).
+
+**api service:** `BACKEND_URL` (default `http://llm:8002`), `BACKEND_MODEL_ID` (set by start.sh from config), `AUTH_CONFIG_PATH` (default `auth.json`).
