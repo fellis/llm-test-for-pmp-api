@@ -8,4 +8,4 @@ COPY entrypoint.py .
 ENV CONFIG_PATH=/config/models.json
 ENV MODEL_PROFILE=coding
 
-ENTRYPOINT ["python", "/app/entrypoint.py"]
+ENTRYPOINT ["python3", "/app/entrypoint.py"]
