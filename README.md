@@ -4,11 +4,11 @@ Single API, single model at a time. Model is chosen by profile at startup (confi
 
 ## Model profiles
 
-| Profile    | Model                          | Use case                    |
-|-----------|---------------------------------|-----------------------------|
-| `coding`  | Qwen2.5-Coder-14B AWQ, 32k     | Code generation             |
-| `reasoning` | Phi-4-reasoning AWQ (14B)    | Reasoning, strict rules     |
-| `chat`    | Mistral-7B-Instruct             | Conversation                |
+| Profile    | Model                          | Use case        |
+|-------------|---------------------------------|-----------------|
+| `coding`    | Qwen2.5-Coder-14B AWQ, 32k      | Code generation |
+| `instruct`  | Qwen2.5-32B-Instruct AWQ, 32k   | General instruct|
+| `chat`      | Mistral-7B-Instruct             | Conversation    |
 
 Profiles are defined in `config/models.json`. All models use the same cache: `./models` (Hugging Face cache). First run downloads the model; later runs use cache.
 
@@ -26,10 +26,11 @@ cd llm-test-for-pmp-api
 ./scripts/start.sh coding
 ```
 
-To run another profile (e.g. reasoning for premium-handle filtering):
+To run another profile (e.g. instruct or chat):
 
 ```bash
-./scripts/start.sh reasoning
+./scripts/start.sh instruct
+./scripts/start.sh chat
 ```
 
 Only one profile runs at a time. Models are loaded from cache (`./models/`). Check logs: `docker compose logs -f llm`.
@@ -37,7 +38,7 @@ Only one profile runs at a time. Models are loaded from cache (`./models/`). Che
 ## Config manager
 
 - **config/models.json** – defines profiles: `model`, `quantization`, `max_model_len`, `gpu_memory_utilization`, `backend_model_id`.
-- **scripts/start.sh \<profile>** – sets `MODEL_PROFILE` and `BACKEND_MODEL_ID`, runs `docker compose up -d`. Use profile name: `coding`, `reasoning`, or `chat`.
+- **scripts/start.sh \<profile>** – sets `MODEL_PROFILE` and `BACKEND_MODEL_ID`, runs `docker compose up -d`. Use profile name: `coding`, `instruct`, or `chat`.
 - **Cache:** `./models` is mounted as Hugging Face cache; no re-download when switching profiles.
 
 ## API
@@ -72,6 +73,6 @@ If `auth.json` is missing or `tokens` is empty, the API runs without auth. `/hea
 
 ## Env vars
 
-**llm service:** `MODEL_PROFILE` (coding | reasoning | chat), `CONFIG_PATH` (default `/config/models.json`).
+**llm service:** `MODEL_PROFILE` (coding | instruct | chat), `CONFIG_PATH` (default `/config/models.json`).
 
 **api service:** `BACKEND_URL` (default `http://llm:8002`), `BACKEND_MODEL_ID` (set by start.sh from config), `AUTH_CONFIG_PATH` (default `auth.json`).
