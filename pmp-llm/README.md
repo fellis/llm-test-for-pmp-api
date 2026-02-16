@@ -8,6 +8,7 @@ Single API, single model at a time. Model is chosen by profile at startup (confi
 |----------------|---------------------------------|---------|-----------------|
 | `coding`       | Qwen3-Coder-30B-A3B AWQ         | 32k     | Code generation |
 | `coding-40k`  | Same as coding                  | 40k     | Code + longer context (OpenHands etc.) |
+| `coding-48k`  | Same as coding                  | 48k     | Experimental; may OOM on 24 GB        |
 | `coding-legacy` | Qwen2.5-Coder-14B AWQ          | 32k     | Legacy          |
 | `instruct`    | Qwen2.5-32B-Instruct AWQ, 6k    | 6k      | General instruct|
 | `chat`        | Mistral-7B-Instruct             | 8k      | Conversation    |
@@ -37,7 +38,8 @@ cd llm-test-for-pmp-api/pmp-llm
 To run another profile (e.g. longer context for OpenHands, or instruct/chat):
 
 ```bash
-./scripts/start.sh coding-40k   # 40k context, same model (if 32k hits 500 from OpenHands)
+./scripts/start.sh coding-40k   # 40k context (if 32k hits 500 from OpenHands)
+./scripts/start.sh coding-48k   # 48k context (experimental, may OOM on 24 GB)
 ./scripts/start.sh instruct
 ./scripts/start.sh chat
 ```
@@ -69,7 +71,7 @@ Expect `"content":"..."` and HTTP 200. If you use a public URL (e.g. llm.aegisal
 ## Config manager
 
 - **config/models.json** – defines profiles: `model`, `quantization`, `max_model_len`, `gpu_memory_utilization`, `backend_model_id`.
-- **scripts/start.sh \<profile>** – sets `MODEL_PROFILE` and `BACKEND_MODEL_ID`, runs `docker compose up -d`. Use profile name: `coding`, `coding-40k`, `instruct`, or `chat`.
+- **scripts/start.sh \<profile>** – sets `MODEL_PROFILE` and `BACKEND_MODEL_ID`, runs `docker compose up -d`. Use profile name: `coding`, `coding-40k`, `coding-48k`, `instruct`, or `chat`.
 - **Cache:** `./models` is mounted as Hugging Face cache; no re-download when switching profiles.
 
 ## API

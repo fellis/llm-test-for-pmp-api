@@ -37,6 +37,14 @@
       "gpu_memory_utilization": 0.9,
       "tool_call_parser": "hermes",
       "backend_model_id": "Qwen/Qwen2.5-32B-Instruct-AWQ"
+    },
+    "coding-48k": {
+      "model": "stelterlab/Qwen3-Coder-30B-A3B-Instruct-AWQ",
+      "max_model_len": 49152,
+      "gpu_memory_utilization": 0.9,
+      "kv_cache_dtype": "fp8",
+      "tool_call_parser": "qwen3_xml",
+      "backend_model_id": "stelterlab/Qwen3-Coder-30B-A3B-Instruct-AWQ"
     }
   }
 }
