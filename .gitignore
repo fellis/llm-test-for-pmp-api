@@ -1,7 +1,4 @@
-models/
-SERVER.md
-auth.json
-api/auth.json
+# General (root; pmp-llm has its own .gitignore)
 __pycache__/
 *.pyc
 .env
@@ -9,3 +6,4 @@ __pycache__/
 venv/
 *.log
 .DS_Store
+SERVER.md

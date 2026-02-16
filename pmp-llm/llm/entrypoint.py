@@ -59,6 +59,19 @@ def main():
     if cfg.get("kv_cache_dtype"):
         argv += ["--kv-cache-dtype", cfg["kv_cache_dtype"]]
 
+    # Function calling / tools support (set tool_call_parser in models.json per profile)
+    # Plugin must be loaded before parser name validation
+    tool_parser_plugin = cfg.get("tool_parser_plugin")
+    if tool_parser_plugin:
+        argv += ["--tool-parser-plugin", tool_parser_plugin]
+    tool_parser = cfg.get("tool_call_parser")
+    if tool_parser:
+        argv += ["--enable-auto-tool-choice", "--tool-call-parser", tool_parser]
+    chat_template = cfg.get("chat_template")
+    if chat_template:
+        argv += ["--chat-template", chat_template]
+
+    print(f"[entrypoint] profile={profile} model={model} tool_parser={tool_parser}", flush=True)
     os.execv(sys.executable, argv)
 
 

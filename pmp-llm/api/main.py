@@ -82,7 +82,7 @@ async def chat_completions(request: Request, _: None = Depends(verify_token)):
         )
 
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=600.0) as client:
             resp = await client.post(url, json=backend_body)
             resp.raise_for_status()
             return resp.json()
@@ -95,7 +95,7 @@ async def chat_completions(request: Request, _: None = Depends(verify_token)):
 
 async def stream_response(url: str, body: dict):
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=600.0) as client:
             async with client.stream("POST", url, json=body) as resp:
                 resp.raise_for_status()
                 async for chunk in resp.aiter_bytes():

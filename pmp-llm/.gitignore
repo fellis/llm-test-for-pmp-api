@@ -1,0 +1,11 @@
+models/
+SERVER.md
+auth.json
+api/auth.json
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+*.log
+.DS_Store
