@@ -4,11 +4,13 @@ Single API, single model at a time. Model is chosen by profile at startup (confi
 
 ## Model profiles
 
-| Profile    | Model                          | Use case        |
-|-------------|---------------------------------|-----------------|
-| `coding`    | Qwen2.5-Coder-14B AWQ, 32k      | Code generation |
-| `instruct`  | Qwen2.5-32B-Instruct AWQ, 6k   | General instruct|
-| `chat`      | Mistral-7B-Instruct             | Conversation    |
+| Profile        | Model                          | Context | Use case        |
+|----------------|---------------------------------|---------|-----------------|
+| `coding`       | Qwen3-Coder-30B-A3B AWQ         | 32k     | Code generation |
+| `coding-40k`  | Same as coding                  | 40k     | Code + longer context (OpenHands etc.) |
+| `coding-legacy` | Qwen2.5-Coder-14B AWQ          | 32k     | Legacy          |
+| `instruct`    | Qwen2.5-32B-Instruct AWQ, 6k    | 6k      | General instruct|
+| `chat`        | Mistral-7B-Instruct             | 8k      | Conversation    |
 
 Profiles are defined in `config/models.json`. All models use the same cache: `./models` (Hugging Face cache). First run downloads the model; later runs use cache.
 
@@ -16,7 +18,13 @@ Profiles are defined in `config/models.json`. All models use the same cache: `./
 
 - Docker + Docker Compose
 - NVIDIA GPU with nvidia-container-toolkit
-- ~24 GB VRAM (A30 or similar)
+- **~24 GB VRAM** (A30 or similar)
+
+### Memory and context length (24 GB VRAM)
+
+- **coding** (32k): fits comfortably.
+- **coding-40k** (40k): +25% KV cache; usually fits on 24 GB. If you see CUDA OOM, use `coding` (32k).
+- 48k+ (e.g. 49152, 65536) on the same model often OOM on 24 GB; use only if you have more VRAM (e.g. 40 GB A100).
 
 ## Quick Start
 
@@ -26,19 +34,42 @@ cd llm-test-for-pmp-api/pmp-llm
 ./scripts/start.sh coding
 ```
 
-To run another profile (e.g. instruct or chat):
+To run another profile (e.g. longer context for OpenHands, or instruct/chat):
 
 ```bash
+./scripts/start.sh coding-40k   # 40k context, same model (if 32k hits 500 from OpenHands)
 ./scripts/start.sh instruct
 ./scripts/start.sh chat
 ```
 
 Only one profile runs at a time. Models are loaded from cache (`./models/`). Check logs: `docker compose logs -f llm`.
 
+## Deploy on server and verify
+
+On the server (where the repo is cloned):
+
+```bash
+cd /path/to/llm-test-for-pmp-api/pmp-llm
+git pull
+./scripts/start.sh coding-40k
+docker compose logs -f llm
+```
+
+Wait until vLLM is ready (no OOM). Then check:
+
+```bash
+curl -s -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"model":"llm","messages":[{"role":"user","content":"Say OK"}],"max_tokens":5}'
+```
+
+Expect `"content":"..."` and HTTP 200. If you use a public URL (e.g. llm.aegisalpha.io), replace `localhost:8000` with that base URL.
+
 ## Config manager
 
 - **config/models.json** – defines profiles: `model`, `quantization`, `max_model_len`, `gpu_memory_utilization`, `backend_model_id`.
-- **scripts/start.sh \<profile>** – sets `MODEL_PROFILE` and `BACKEND_MODEL_ID`, runs `docker compose up -d`. Use profile name: `coding`, `instruct`, or `chat`.
+- **scripts/start.sh \<profile>** – sets `MODEL_PROFILE` and `BACKEND_MODEL_ID`, runs `docker compose up -d`. Use profile name: `coding`, `coding-40k`, `instruct`, or `chat`.
 - **Cache:** `./models` is mounted as Hugging Face cache; no re-download when switching profiles.
 
 ## API
