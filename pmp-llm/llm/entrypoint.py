@@ -59,6 +59,14 @@ def main():
     if cfg.get("kv_cache_dtype"):
         argv += ["--kv-cache-dtype", cfg["kv_cache_dtype"]]
 
+    # Tokenizer mode: "hf" uses HuggingFace tokenizer (avoids mistral_common restrictions)
+    if cfg.get("tokenizer_mode"):
+        argv += ["--tokenizer-mode", cfg["tokenizer_mode"]]
+    if cfg.get("config_format"):
+        argv += ["--config-format", cfg["config_format"]]
+    if cfg.get("load_format"):
+        argv += ["--load-format", cfg["load_format"]]
+
     # Function calling / tools support (set tool_call_parser in models.json per profile)
     # Plugin must be loaded before parser name validation
     tool_parser_plugin = cfg.get("tool_parser_plugin")
