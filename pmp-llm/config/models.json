@@ -55,6 +55,15 @@
       "kv_cache_dtype": "fp8",
       "tool_call_parser": "qwen3_xml",
       "backend_model_id": "stelterlab/Qwen3-Coder-30B-A3B-Instruct-AWQ"
+    },
+    "devstral": {
+      "model": "cyankiwi/Devstral-Small-2-24B-Instruct-2512-AWQ-4bit",
+      "quantization": "awq",
+      "max_model_len": 65536,
+      "gpu_memory_utilization": 0.92,
+      "kv_cache_dtype": "fp8",
+      "tool_call_parser": "mistral",
+      "backend_model_id": "cyankiwi/Devstral-Small-2-24B-Instruct-2512-AWQ-4bit"
     }
   }
 }
