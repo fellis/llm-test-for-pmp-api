@@ -58,7 +58,6 @@
     },
     "devstral": {
       "model": "cyankiwi/Devstral-Small-2-24B-Instruct-2512-AWQ-4bit",
-      "quantization": "awq",
       "max_model_len": 65536,
       "gpu_memory_utilization": 0.92,
       "kv_cache_dtype": "fp8",
