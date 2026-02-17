@@ -62,6 +62,7 @@
       "gpu_memory_utilization": 0.92,
       "kv_cache_dtype": "fp8",
       "tool_call_parser": "mistral",
+      "chat_template": "/app/templates/tool_chat_template_mistral_parallel.jinja",
       "backend_model_id": "cyankiwi/Devstral-Small-2-24B-Instruct-2512-AWQ-4bit"
     }
   }

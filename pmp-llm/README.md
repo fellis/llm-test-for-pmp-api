@@ -12,8 +12,9 @@ Single API, single model at a time. Model is chosen by profile at startup (confi
 | `coding-legacy` | Qwen2.5-Coder-14B AWQ          | 32k     | Legacy          |
 | `instruct`    | Qwen2.5-32B-Instruct AWQ, 6k    | 6k      | General instruct|
 | `chat`        | Mistral-7B-Instruct             | 8k      | Conversation    |
+| `devstral`    | Devstral-Small-2-24B AWQ 4bit    | 65k     | AI platform, tool calling + multi-turn |
 
-Profiles are defined in `config/models.json`. All models use the same cache: `./models` (Hugging Face cache). First run downloads the model; later runs use cache.
+Profiles are defined in `config/models.json`. For **devstral**, `chat_template` is set so that multi-turn tool calls (assistant with `tool_calls` + role `tool` in messages) work; tool_call_id must be at least 9 characters (e.g. `call_00001`). All models use the same cache: `./models` (Hugging Face cache). First run downloads the model; later runs use cache.
 
 ## Requirements
 
