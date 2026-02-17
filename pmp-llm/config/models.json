@@ -62,6 +62,7 @@
       "gpu_memory_utilization": 0.92,
       "kv_cache_dtype": "fp8",
       "tokenizer_mode": "hf",
+      "trust_remote_code": true,
       "tool_call_parser": "mistral",
       "backend_model_id": "cyankiwi/Devstral-Small-2-24B-Instruct-2512-AWQ-4bit"
     }

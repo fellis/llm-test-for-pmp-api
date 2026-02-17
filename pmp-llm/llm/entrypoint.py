@@ -66,6 +66,8 @@ def main():
         argv += ["--config-format", cfg["config_format"]]
     if cfg.get("load_format"):
         argv += ["--load-format", cfg["load_format"]]
+    if cfg.get("trust_remote_code"):
+        argv += ["--trust-remote-code"]
 
     # Function calling / tools support (set tool_call_parser in models.json per profile)
     # Plugin must be loaded before parser name validation
