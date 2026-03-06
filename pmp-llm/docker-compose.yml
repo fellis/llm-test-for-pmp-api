@@ -33,3 +33,35 @@ services:
     # volumes:
     #   - ./auth.json:/app/auth.json
     restart: unless-stopped
+
+  # CPU-only Ollama for Signal Hunter classification (qwen2.5:7b in RAM, GPU untouched)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-cpu
+    environment:
+      - OLLAMA_NUM_GPU=0
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  # Pulls qwen2.5:7b once on startup (no-op if already cached in ollama_data volume)
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-init
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: ["ollama", "pull", "qwen2.5:7b"]
+    restart: "no"
+
+volumes:
+  ollama_data:
