@@ -14,6 +14,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 BACKEND_URL = os.getenv("BACKEND_URL", "http://llm:8002")
 BACKEND_MODEL_ID = os.getenv("BACKEND_MODEL_ID", "Qwen/Qwen2.5-Coder-14B-Instruct-AWQ")
 AUTH_CONFIG_PATH = os.getenv("AUTH_CONFIG_PATH", "auth.json")
+TRANSLATOR_URL = os.getenv("TRANSLATOR_URL", "http://translator:6340")
 
 # Set of allowed tokens; None means auth disabled (no config or empty tokens)
 allowed_tokens: set[str] | None = None
@@ -102,3 +103,29 @@ async def stream_response(url: str, body: dict):
                     yield chunk
     except httpx.ConnectError:
         yield b"data: {\"error\":{\"message\":\"Backend not available\",\"code\":\"backend_unavailable\"}}\n\n"
+
+
+# ---------------------------------------------------------------------------
+# Translator proxy - forwards /translator/* to the MADLAD-400 service
+# Auth uses the same token as the LLM API.
+# ---------------------------------------------------------------------------
+
+@app.api_route("/translator/{path:path}", methods=["GET", "POST"])
+async def translator_proxy(path: str, request: Request, _: None = Depends(verify_token)):
+    """Proxy requests to the local MADLAD-400 translation service."""
+    target_url = f"{TRANSLATOR_URL}/{path}"
+    body = await request.body()
+    headers = {k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")}
+
+    try:
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            resp = await client.request(
+                method=request.method,
+                url=target_url,
+                content=body,
+                headers=headers,
+                params=dict(request.query_params),
+            )
+            return resp.json()
+    except httpx.ConnectError as e:
+        raise HTTPException(status_code=503, detail="Translator service unavailable") from e
