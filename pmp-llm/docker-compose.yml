@@ -49,8 +49,7 @@ services:
       # 64 EPYC cores: 4 parallel requests x 16 threads each
       - INTER_THREADS=4
       - INTRA_THREADS=16
-    security_opt:
-      - seccomp=unconfined
+    privileged: true
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:6340/health || exit 1"]

@@ -2,13 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# System deps for sentencepiece build
+# System deps: sentencepiece build + patchelf to clear execstack flag from ctranslate2 .so
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
+    build-essential patchelf \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && find /usr/local/lib -name "libctranslate2*.so*" -exec patchelf --clear-execstack {} \;
 
 COPY app.py .
 
