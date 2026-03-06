@@ -165,10 +165,10 @@ def translate(req: TranslateRequest) -> TranslateResponse:
     tag = LANG_TAGS[req.target_lang]
     t0 = time.monotonic()
 
-    # MADLAD-400 expects the language tag as "<2ru> text" encoded together
-    # via sentencepiece - the angle-bracket token is in the sp vocabulary
+        # MADLAD-400: prepend the language tag token BEFORE sentencepiece encoding.
+    # <2ru> is a special token that must bypass sp tokenization.
     tokenized = [
-        sp.Encode(f"<{tag}> {text[:MAX_INPUT_LENGTH]}", out_type=str)
+        [f"<{tag}>"] + sp.Encode(text[:MAX_INPUT_LENGTH], out_type=str)
         for text in req.texts
     ]
 
