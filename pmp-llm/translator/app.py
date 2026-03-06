@@ -27,8 +27,8 @@ from pydantic import BaseModel
 log = logging.getLogger("translator")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
-MODEL_ID = os.environ.get("MODEL_ID", "samgreen/madlad400-10b-mt-ct2-int8_bfloat16")
-MODEL_DIR = os.environ.get("MODEL_DIR", "/models/madlad400-10b-mt-ct2-int8")
+MODEL_ID = os.environ.get("MODEL_ID", "cstr/madlad400-3b-ct2-int8")
+MODEL_DIR = os.environ.get("MODEL_DIR", "/models/madlad400-3b-ct2-int8")
 INTER_THREADS = int(os.environ.get("INTER_THREADS", "4"))
 INTRA_THREADS = int(os.environ.get("INTRA_THREADS", "16"))
 MAX_BATCH = int(os.environ.get("MAX_BATCH", "32"))
@@ -101,7 +101,7 @@ def _load_model(model_dir: str) -> tuple[ctranslate2.Translator, spm.SentencePie
         device="cpu",
         inter_threads=INTER_THREADS,
         intra_threads=INTRA_THREADS,
-        compute_type="int8",
+        compute_type="auto",
     )
 
     sp_path = os.path.join(model_dir, "sentencepiece.model")
@@ -165,9 +165,10 @@ def translate(req: TranslateRequest) -> TranslateResponse:
     tag = LANG_TAGS[req.target_lang]
     t0 = time.monotonic()
 
-    # Tokenize: prepend language tag to each input
+    # MADLAD-400 expects the language tag as "<2ru> text" encoded together
+    # via sentencepiece - the angle-bracket token is in the sp vocabulary
     tokenized = [
-        [tag] + sp.Encode(text[:MAX_INPUT_LENGTH], out_type=str)
+        sp.Encode(f"<{tag}> {text[:MAX_INPUT_LENGTH]}", out_type=str)
         for text in req.texts
     ]
 
