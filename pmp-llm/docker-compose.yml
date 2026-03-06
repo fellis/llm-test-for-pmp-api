@@ -44,8 +44,8 @@ services:
     volumes:
       - translator_models:/models
     environment:
-      - MODEL_ID=santhosh/madlad400-10b-ct2
-      - MODEL_DIR=/models/madlad400-10b-ct2
+      - MODEL_ID=samgreen/madlad400-10b-mt-ct2-int8_bfloat16
+      - MODEL_DIR=/models/madlad400-10b-mt-ct2-int8
       # 64 EPYC cores: 4 parallel requests x 16 threads each
       - INTER_THREADS=4
       - INTRA_THREADS=16
