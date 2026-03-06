@@ -165,15 +165,17 @@ def translate(req: TranslateRequest) -> TranslateResponse:
     tag = LANG_TAGS[req.target_lang]
     t0 = time.monotonic()
 
-        # MADLAD-400: prepend the language tag token BEFORE sentencepiece encoding.
-    # <2ru> is a special token that must bypass sp tokenization.
+        # MADLAD-400 is T5-based: language tag goes on the DECODER side as target_prefix,
+    # not the encoder side. In transformers this is forced_bos_token_id.
     tokenized = [
-        [f"<{tag}>"] + sp.Encode(text[:MAX_INPUT_LENGTH], out_type=str)
+        sp.Encode(text[:MAX_INPUT_LENGTH], out_type=str)
         for text in req.texts
     ]
+    target_prefix = [[f"<{tag}>"]] * len(tokenized)
 
     results = translator.translate_batch(
         tokenized,
+        target_prefix=target_prefix,
         max_decoding_length=req.max_decoding_length,
         beam_size=2,
         no_repeat_ngram_size=4,
