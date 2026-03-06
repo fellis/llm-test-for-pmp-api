@@ -177,12 +177,13 @@ def translate(req: TranslateRequest) -> TranslateResponse:
         tokenized,
         target_prefix=target_prefix,
         max_decoding_length=req.max_decoding_length,
-        beam_size=2,
-        no_repeat_ngram_size=4,
+        beam_size=4,
+        no_repeat_ngram_size=5,
     )
 
+    prefix_len = len(target_prefix[0])
     translations = [
-        sp.Decode(r.hypotheses[0]) for r in results
+        sp.Decode(r.hypotheses[0][prefix_len:]) for r in results
     ]
 
     elapsed_ms = int((time.monotonic() - t0) * 1000)
