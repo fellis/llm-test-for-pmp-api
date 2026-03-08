@@ -2,6 +2,7 @@
 API proxy for PMP LLM. Single backend (one model at a time).
 """
 import json
+import logging
 import os
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -44,6 +45,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="PMP LLM API", lifespan=lifespan)
+log = logging.getLogger(__name__)
 
 
 async def verify_token(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> None:
@@ -72,6 +74,9 @@ async def list_models(_: None = Depends(verify_token)):
 
 @app.api_route("/v1/chat/completions", methods=["POST"])
 async def chat_completions(request: Request, _: None = Depends(verify_token)):
+    op = request.headers.get("X-Signal-Hunter-Operation", "")
+    if op:
+        log.info("[signal-hunter] %s", op)
     body = await request.json()
     url = f"{BACKEND_URL}/v1/chat/completions"
     backend_body = {**body, "model": BACKEND_MODEL_ID}
