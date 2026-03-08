@@ -21,6 +21,28 @@ TRANSLATOR_URL = os.getenv("TRANSLATOR_URL", "http://translator:6340")
 allowed_tokens: set[str] | None = None
 security = HTTPBearer(auto_error=False)
 
+# Resolved model id for backend (vLLM returns 404 if request model != loaded model). Fetched from backend on first use.
+_resolved_backend_model_id: str | None = None
+
+
+async def _get_backend_model_id() -> str:
+    """Return model id to send to backend. Fetches from backend /v1/models so it matches the loaded model (avoids vLLM 404)."""
+    global _resolved_backend_model_id
+    if _resolved_backend_model_id is not None:
+        return _resolved_backend_model_id
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.get(f"{BACKEND_URL}/v1/models")
+            r.raise_for_status()
+            data = r.json()
+            models = data.get("data") or []
+            if models and isinstance(models[0].get("id"), str):
+                _resolved_backend_model_id = models[0]["id"]
+                return _resolved_backend_model_id
+    except Exception:
+        pass
+    return BACKEND_MODEL_ID
+
 
 def load_allowed_tokens() -> set[str] | None:
     """Load allowed tokens from JSON config. Returns None if auth is disabled."""
@@ -80,7 +102,8 @@ async def chat_completions(request: Request, _: None = Depends(verify_token)):
         print(f"[signal-hunter] {op}", flush=True)
     body = await request.json()
     url = f"{BACKEND_URL}/v1/chat/completions"
-    backend_body = {**body, "model": BACKEND_MODEL_ID}
+    model_id = await _get_backend_model_id()
+    backend_body = {**body, "model": model_id}
 
     if body.get("stream"):
         return StreamingResponse(
