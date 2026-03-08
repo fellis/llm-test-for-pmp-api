@@ -77,6 +77,7 @@ async def chat_completions(request: Request, _: None = Depends(verify_token)):
     op = request.headers.get("X-Signal-Hunter-Operation", "")
     if op:
         log.info("[signal-hunter] %s", op)
+        print(f"[signal-hunter] {op}", flush=True)
     body = await request.json()
     url = f"{BACKEND_URL}/v1/chat/completions"
     backend_body = {**body, "model": BACKEND_MODEL_ID}
