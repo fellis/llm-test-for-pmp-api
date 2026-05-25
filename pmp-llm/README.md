@@ -62,7 +62,7 @@ One GPU on pmp-gpt: **either** chat LLM **or** Phase 2 embedding worker, never b
 ./scripts/start.sh devstral    # stop embedder, start LLM profile
 ```
 
-Embedding worker code: `phase2-embedding-worker/` (sync from product-research POC). LAN URL: `http://10.10.10.4:8090`. No auth on embed endpoints.
+Embedding worker: GPU (`Dockerfile.gpu`, `EMBEDDING_DEVICE=cuda`, port **8090**). Sync source from product-research POC.
 
 ## Deploy on server and verify
 
