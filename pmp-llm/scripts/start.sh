@@ -32,6 +32,9 @@ fi
 echo "Stopping embedding worker (profile embedding)..."
 docker compose --profile embedding stop phase2-embedding-worker 2>/dev/null || true
 
+echo "Stopping rerank worker (profile rerank)..."
+docker compose --profile rerank stop phase2-rerank-worker 2>/dev/null || true
+
 export MODEL_PROFILE="$PROFILE"
 export BACKEND_MODEL_ID
 echo "Starting LLM profile: $PROFILE (BACKEND_MODEL_ID=$BACKEND_MODEL_ID)"

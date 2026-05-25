@@ -1,6 +1,7 @@
 # GPU modes (one at a time on the same GPU):
 #   LLM:       ./scripts/start.sh <profile>     (profiles: llm)
 #   Embedding: ./scripts/start-embedding.sh     (profile: embedding)
+#   Rerank:    ./scripts/start-rerank.sh        (profile: rerank)
 # Models cache: ./models (Hugging Face). Run: ./scripts/status.sh
 
 services:
@@ -66,6 +67,8 @@ services:
       - /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:ro
     ports:
       - "8090:8090"
+      # Public edge (llm.aegisalpha.io) proxies to host :8000; LLM api is stopped in embedding mode.
+      - "8000:8090"
     shm_size: "4gb"
     restart: unless-stopped
     healthcheck:
@@ -74,6 +77,41 @@ services:
       timeout: 10s
       retries: 10
       start_period: 300s
+
+  phase2-rerank-worker:
+    profiles: ["rerank"]
+    build:
+      context: ./phase2-rerank-worker
+      dockerfile: Dockerfile.gpu
+    image: phase2-rerank-worker-gpu
+    container_name: phase2-rerank-worker
+    devices:
+      - /dev/nvidia0:/dev/nvidia0
+      - /dev/nvidiactl:/dev/nvidiactl
+      - /dev/nvidia-uvm:/dev/nvidia-uvm
+    environment:
+      - RERANK_MODEL=${RERANK_MODEL:-nvidia/llama-nemotron-rerank-1b-v2}
+      - RERANK_DEVICE=cuda
+      - RERANK_MAX_INFLIGHT=${RERANK_MAX_INFLIGHT:-20}
+      - RERANK_MAX_CHARS=28000
+      - RERANK_MAX_TOKENS=8192
+      - RERANK_PAIR_BATCH_SIZE=8
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - ./models:/root/.cache/huggingface
+      - /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1:ro
+      - /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:ro
+    ports:
+      - "8091:8091"
+      - "8000:8091"
+    shm_size: "4gb"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 600s
 
   # MADLAD-400 translation (CPU). Optional; not part of llm/embedding GPU switch.
   translator:

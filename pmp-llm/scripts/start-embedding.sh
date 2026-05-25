@@ -8,6 +8,9 @@ cd "$(dirname "$0")/.."
 echo "Stopping LLM stack (profile llm)..."
 docker compose --profile llm stop llm api 2>/dev/null || true
 
+echo "Stopping rerank worker (profile rerank)..."
+docker compose --profile rerank stop phase2-rerank-worker 2>/dev/null || true
+
 echo "Removing stale embedding container if any..."
 docker rm -f phase2-embedding-worker 2>/dev/null || true
 
@@ -20,7 +23,7 @@ while (( SECONDS < deadline )); do
   if curl -sf http://127.0.0.1:8090/health >/dev/null 2>&1; then
     curl -s http://127.0.0.1:8090/health
     echo
-    echo "Embedding worker ready on :8090"
+    echo "Embedding worker ready on :8090 (LAN) and :8000 (public via https://llm.aegisalpha.io)"
     exit 0
   fi
   sleep 5
