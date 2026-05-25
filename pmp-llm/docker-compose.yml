@@ -1,9 +1,11 @@
-# Single LLM backend: model chosen by MODEL_PROFILE (see config/models.json).
-# Run: ./scripts/start.sh <profile>  (e.g. coding | reasoning | chat)
-# Models are cached in ./models (Hugging Face cache), not re-downloaded.
+# GPU modes (one at a time on the same GPU):
+#   LLM:       ./scripts/start.sh <profile>     (profiles: llm)
+#   Embedding: ./scripts/start-embedding.sh     (profile: embedding)
+# Models cache: ./models (Hugging Face). Run: ./scripts/status.sh
 
 services:
   llm:
+    profiles: ["llm"]
     build: ./llm
     image: llm-backend
     container_name: llm-backend
@@ -22,6 +24,7 @@ services:
     restart: unless-stopped
 
   api:
+    profiles: ["llm"]
     build: ./api
     container_name: llm-api
     ports:
@@ -33,9 +36,40 @@ services:
     # volumes:
     #   - ./auth.json:/app/auth.json
     restart: unless-stopped
+    depends_on:
+      - llm
 
-  # MADLAD-400-10B translation service (CPU, CTranslate2)
-  # Exposed on port 6340, accessible from signal-hunter VPS via 10.10.10.4:6340
+  phase2-embedding-worker:
+    profiles: ["embedding"]
+    build:
+      context: ./phase2-embedding-worker
+      dockerfile: Dockerfile.gpu
+    image: phase2-embedding-worker-gpu
+    container_name: phase2-embedding-worker
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - CUDA_VISIBLE_DEVICES=0
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
+      - EMBEDDING_DEVICE=cuda
+      - EMBEDDING_ENCODE_BATCH_SIZE=32
+      - EMBEDDING_MAX_INFLIGHT=${EMBEDDING_MAX_INFLIGHT:-20}
+      - EMBEDDING_MAX_CHARS_PER_TEXT=28000
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - ./models:/root/.cache/huggingface
+    ports:
+      - "8090:8090"
+    shm_size: "4gb"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+
+  # MADLAD-400 translation (CPU). Optional; not part of llm/embedding GPU switch.
   translator:
     build: ./translator
     container_name: translator
@@ -46,7 +80,6 @@ services:
     environment:
       - MODEL_ID=cstr/madlad400-3b-ct2-int8
       - MODEL_DIR=/models/madlad400-3b-ct2-int8
-      # 64 EPYC cores: 4 parallel requests x 16 threads each
       - INTER_THREADS=4
       - INTRA_THREADS=16
     privileged: true

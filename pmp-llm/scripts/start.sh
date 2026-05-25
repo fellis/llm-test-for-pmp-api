@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Start LLM backend with the chosen model profile. Models load from cache (./models).
+# Start LLM backend with the chosen model profile. Stops embedding worker first (same GPU).
 # Usage: ./scripts/start.sh <profile>
-# Profiles: coding | reasoning | chat  (see config/models.json)
+# Profiles: see config/models.json (coding, devstral, instruct, chat, ...)
 
-set -e
+set -euo pipefail
 cd "$(dirname "$0")/.."
 PROFILE="${1:-coding}"
 
@@ -13,7 +13,6 @@ if [[ ! -f "$CONFIG" ]]; then
   exit 1
 fi
 
-# Read backend_model_id for the profile (requires jq or python)
 if command -v jq &>/dev/null; then
   BACKEND_MODEL_ID=$(jq -r --arg p "$PROFILE" '.profiles[$p].backend_model_id // empty' "$CONFIG")
 else
@@ -30,7 +29,26 @@ if [[ -z "$BACKEND_MODEL_ID" ]]; then
   exit 1
 fi
 
+echo "Stopping embedding worker (profile embedding)..."
+docker compose --profile embedding stop phase2-embedding-worker 2>/dev/null || true
+
 export MODEL_PROFILE="$PROFILE"
 export BACKEND_MODEL_ID
-echo "Starting profile: $PROFILE (BACKEND_MODEL_ID=$BACKEND_MODEL_ID)"
-exec docker compose up -d --build
+echo "Starting LLM profile: $PROFILE (BACKEND_MODEL_ID=$BACKEND_MODEL_ID)"
+docker compose --profile llm up -d --build
+
+echo "Waiting for http://127.0.0.1:8000/health ..."
+deadline=$((SECONDS + 900))
+while (( SECONDS < deadline )); do
+  if curl -sf http://127.0.0.1:8000/health >/dev/null 2>&1; then
+    curl -s http://127.0.0.1:8000/health
+    echo
+    echo "LLM API ready on :8000 (profile=$PROFILE)"
+    exit 0
+  fi
+  sleep 10
+done
+
+echo "ERROR: LLM API did not become healthy within 900s" >&2
+docker compose --profile llm logs --tail 80 llm >&2 || true
+exit 1

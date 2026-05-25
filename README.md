@@ -6,7 +6,7 @@ This repo contains the **PMP LLM service** and shared **docs**. The admin panel 
 
 | Path | Description |
 |------|-------------|
-| **pmp-llm/** | LLM API + backend (vLLM). Run and deploy from here. See [pmp-llm/README.md](pmp-llm/README.md). |
+| **pmp-llm/** | LLM API + backend (vLLM), optional Phase 2 embedding worker. Run and deploy from here. See [pmp-llm/README.md](pmp-llm/README.md). |
 | **docs/** | Platform and memory-layer docs (AI customization, ABLE Core, OpenCode). |
 
 ## Quick start (LLM)

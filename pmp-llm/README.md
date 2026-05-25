@@ -45,7 +45,24 @@ To run another profile (e.g. longer context for OpenHands, or instruct/chat):
 ./scripts/start.sh chat
 ```
 
-Only one profile runs at a time. Models are loaded from cache (`./models/`). Check logs: `docker compose logs -f llm`.
+Only one **LLM** profile runs at a time. Models are loaded from cache (`./models/`). Check logs: `docker compose --profile llm logs -f llm`.
+
+## GPU modes (LLM vs embedding)
+
+One GPU on pmp-gpt: **either** chat LLM **or** Phase 2 embedding worker, never both.
+
+| Mode | Command | Port |
+|------|---------|------|
+| LLM (vLLM) | `./scripts/start.sh <profile>` | 8000 |
+| Embedding POC | `./scripts/start-embedding.sh` | 8090 |
+
+```bash
+./scripts/status.sh          # which mode is up
+./scripts/start-embedding.sh   # stop llm+api, start embedder
+./scripts/start.sh devstral    # stop embedder, start LLM profile
+```
+
+Embedding worker code: `phase2-embedding-worker/` (sync from product-research POC). LAN URL: `http://10.10.10.4:8090`. No auth on embed endpoints.
 
 ## Deploy on server and verify
 
@@ -72,7 +89,8 @@ Expect `"content":"..."` and HTTP 200. If you use a public URL (e.g. llm.aegisal
 ## Config manager
 
 - **config/models.json** – defines profiles: `model`, `quantization`, `max_model_len`, `gpu_memory_utilization`, `backend_model_id`.
-- **scripts/start.sh \<profile>** – sets `MODEL_PROFILE` and `BACKEND_MODEL_ID`, runs `docker compose up -d`. Use profile name: `coding`, `coding-40k`, `coding-48k`, `instruct`, or `chat`.
+- **scripts/start.sh \<profile>** – stops embedding worker, sets `MODEL_PROFILE` / `BACKEND_MODEL_ID`, runs `docker compose --profile llm up -d`.
+- **scripts/start-embedding.sh** – stops LLM stack, runs `docker compose --profile embedding up -d` for Phase 2b POC embedder.
 - **Cache:** `./models` is mounted as Hugging Face cache; no re-download when switching profiles.
 
 ## API
@@ -94,6 +112,7 @@ Expect `"content":"..."` and HTTP 200. If you use a public URL (e.g. llm.aegisal
 |------|-------------------|
 | 8000 | API (main entry)  |
 | 8002 | LLM backend      |
+| 8090 | Phase 2 embedding worker (profile `embedding`) |
 
 ## Auth (optional)
 
