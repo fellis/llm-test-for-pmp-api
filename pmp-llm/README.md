@@ -62,7 +62,7 @@ One GPU on pmp-gpt: **either** chat LLM **or** Phase 2 embedding worker, never b
 ./scripts/start.sh devstral    # stop embedder, start LLM profile
 ```
 
-Embedding worker: GPU (`Dockerfile.gpu`, `EMBEDDING_DEVICE=cuda`, port **8090**). Sync source from product-research POC.
+Embedding worker: **GPU** on `:8090` (`Dockerfile.gpu`, `EMBEDDING_DEVICE=cuda`). Uses device passthrough + host `libcuda` mounts so it starts even when `runtime: nvidia` / NVML reports driver/library mismatch (no reboot). LAN: `http://10.10.10.4:8090`.
 
 ## Deploy on server and verify
 

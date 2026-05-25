@@ -46,10 +46,14 @@ services:
       dockerfile: Dockerfile.gpu
     image: phase2-embedding-worker-gpu
     container_name: phase2-embedding-worker
-    runtime: nvidia
+    # Device passthrough + host driver libs: works when nvidia-container-toolkit CDI
+    # fails with NVML driver/library mismatch (kernel module not reloaded after apt upgrade).
+    # Do not use runtime: nvidia here until host nvidia-smi is clean or after reboot.
+    devices:
+      - /dev/nvidia0:/dev/nvidia0
+      - /dev/nvidiactl:/dev/nvidiactl
+      - /dev/nvidia-uvm:/dev/nvidia-uvm
     environment:
-      - NVIDIA_VISIBLE_DEVICES=0
-      - CUDA_VISIBLE_DEVICES=0
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
       - EMBEDDING_DEVICE=cuda
       - EMBEDDING_ENCODE_BATCH_SIZE=32
@@ -58,6 +62,8 @@ services:
       - HF_HOME=/root/.cache/huggingface
     volumes:
       - ./models:/root/.cache/huggingface
+      - /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1:ro
+      - /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:ro
     ports:
       - "8090:8090"
     shm_size: "4gb"

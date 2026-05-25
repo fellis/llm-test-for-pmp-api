@@ -8,6 +8,9 @@ cd "$(dirname "$0")/.."
 echo "Stopping LLM stack (profile llm)..."
 docker compose --profile llm stop llm api 2>/dev/null || true
 
+echo "Removing stale embedding container if any..."
+docker rm -f phase2-embedding-worker 2>/dev/null || true
+
 echo "Starting embedding worker (profile embedding)..."
 docker compose --profile embedding up -d --build phase2-embedding-worker
 
